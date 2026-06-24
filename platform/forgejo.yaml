@@ -35,8 +35,6 @@ spec:
               value: "2222"
             - name: FORGEJO__server__SSH_PORT
               value: "30022"
-              value: "30022"
-              value: "2222"
             - name: FORGEJO__server__OFFLINE_MODE
               value: "true"
             - name: FORGEJO__database__DB_TYPE
