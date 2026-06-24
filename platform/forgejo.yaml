@@ -32,7 +32,9 @@ spec:
             - name: FORGEJO__server__SSH_DOMAIN
               value: git.spark.homelab.lan
             - name: FORGEJO__server__SSH_LISTEN_PORT
+              value: "2222"
             - name: FORGEJO__server__SSH_PORT
+              value: "30022"
               value: "30022"
               value: "2222"
             - name: FORGEJO__server__OFFLINE_MODE
