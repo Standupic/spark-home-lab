@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - prometheus.yaml
+  - prometheus-config.yaml
+  - grafana.yaml
+  - grafana-datasources.yaml
+  - grafana-dashboards.yaml
+  - grafana-dashboard-provider.yaml
+  - loki.yaml
+  - loki-config.yaml
+  - tempo.yaml
+  - tempo-config.yaml
+  - promtail.yaml
+  - promtail-config.yaml
+  - node-exporter.yaml
+  - kube-state-metrics.yaml

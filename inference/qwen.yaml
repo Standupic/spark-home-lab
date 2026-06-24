@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qwen
+  namespace: inference
+  labels:
+    app: qwen
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qwen
+  template:
+    metadata:
+      labels:
+        app: qwen
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: llama-cpp
+          image: llama-cpp:sm121
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-m"
+            - "/models/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf"
+            - "--mmproj"
+            - "/models/mmproj-BF16.gguf"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8081"
+            - "-ngl"
+            - "99"
+            - "-c"
+            - "131072"
+            - "-fa"
+            - "on"
+            - "--spec-type"
+            - "draft-mtp"
+            - "--cache-type-k"
+            - "bf16"
+            - "--cache-type-v"
+            - "bf16"
+            - "--jinja"
+            - "-t"
+            - "8"
+            - "-tb"
+            - "4"
+            - "-np"
+            - "1"
+            - "--metrics"
+          ports:
+            - containerPort: 8081
+              protocol: TCP
+          resources:
+            requests:
+              nvidia.com/gpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          startupProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 450
+            periodSeconds: 10
+            failureThreshold: 45
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      volumes:
+        - name: models
+          hostPath:
+            path: /home/admin/models/qwen-gguf
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qwen
+  namespace: inference
+spec:
+  selector:
+    app: qwen
+  ports:
+    - port: 8081
+      targetPort: 8081

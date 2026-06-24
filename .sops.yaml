@@ -1,0 +1,4 @@
+# SOPS config — ready for future DC deployment
+# When active: create age key with: age-keygen -o ~/age.key
+# Add public key here, encrypt *.sops.yaml, Flux decrypts via Kustomization
+creation_rules: []

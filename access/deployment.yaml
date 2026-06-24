@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: access
+  labels:
+    app: litellm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+        - name: litellm
+          image: litellm/litellm:latest
+          imagePullPolicy: Always
+          args:
+            - "--config"
+            - "/app/config/config.yaml"
+            - "--port"
+            - "4000"
+          ports:
+            - containerPort: 4000
+              protocol: TCP
+          env:
+            - name: FORWARDED_ALLOW_IPS
+              value: "*"
+            - name: LITELLM_CONFIG_PATH
+              value: /app/config/config.yaml
+            - name: DATABASE_URL
+              value: postgresql://admin:litellm-platform@postgres.platform.svc.cluster.local:5432/litellm
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secret
+                  key: LITELLM_MASTER_KEY
+          startupProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+      volumes:
+        - name: config
+          configMap:
+            name: litellm-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: access
+  labels:
+    app: litellm
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
+      nodePort: 30400
+  selector:
+    app: litellm

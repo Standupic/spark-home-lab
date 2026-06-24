@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gemma
+  namespace: inference
+  labels:
+    app: gemma
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gemma
+  template:
+    metadata:
+      labels:
+        app: gemma
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: llama-cpp
+          image: llama-cpp:sm121
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-m"
+            - "/models/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8080"
+            - "-ngl"
+            - "99"
+            - "-c"
+            - "131072"
+            - "-np"
+            - "2"
+            - "--cache-ram"
+            - "16384"
+            - "-fa"
+            - "auto"
+            - "-t"
+            - "8"
+            - "-tb"
+            - "4"
+            - "--metrics"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: "32Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              memory: "80Gi"
+              nvidia.com/gpu: "1"
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      volumes:
+        - name: models
+          hostPath:
+            path: /home/admin/models/gemma-gguf
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gemma
+  namespace: inference
+spec:
+  selector:
+    app: gemma
+  ports:
+    - port: 8080
+      targetPort: 8080

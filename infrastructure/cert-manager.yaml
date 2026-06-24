@@ -1,0 +1,47 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-ca-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: spark-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: spark.homelab.lan CA
+  secretName: spark-ca-secret
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-ca-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: spark-ca-issuer
+spec:
+  ca:
+    secretName: spark-ca-secret
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: spark-tls
+  namespace: default
+spec:
+  commonName: spark.homelab.lan
+  dnsNames:
+    - spark.homelab.lan
+    - "*.spark.homelab.lan"
+  secretName: spark-tls-secret
+  issuerRef:
+    name: spark-ca-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
