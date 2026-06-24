@@ -1,12 +1,21 @@
+---
+# GitRepository — currently disabled
+# Apply manually when ready to re-enable GitOps:
+#   kubectl apply -f flux-system/gitrepository.yaml
+#
+# API: https://fluxcd.io/flux/components/source/gitrepositories/
+#
+# NOTE: Flux source-controller cannot clone via SSH from within k3s
+# due to hairpin NAT (pod → NodePort → same host). Use git-daemon or HTTP+token.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
-  name: cluster
+  name: spark-platform
   namespace: flux-system
 spec:
   interval: 1m
-  url: git://spark-a1fa.lan:9418/flux-repo
+  url: ssh://git@git.spark.homelab.lan:30022/Homelab/spark-platform-gitops.git
   ref:
-    branch: main
+    branch: master
   secretRef:
-    name: flux-ssh-key
+    name: flux-forgejo-ssh
