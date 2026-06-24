@@ -1375,5 +1375,6 @@ data:
       "refresh": "30s"
     }
 kind: ConfigMap
+  namespace: observability
 metadata:
   name: grafana-dashboards
