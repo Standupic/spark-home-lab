@@ -1,0 +1,111 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bge-m3-data
+  namespace: inference
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bge-m3
+  namespace: inference
+  labels:
+    app: bge-m3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bge-m3
+  template:
+    metadata:
+      labels:
+        app: bge-m3
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: bge-m3
+          image: rbehzadan/bge-m3-f16:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          env:
+            - name: LLAMA_ARG_HOST
+              value: "0.0.0.0"
+            - name: LLAMA_ARG_PORT
+              value: "8080"
+            - name: LLAMA_ARG_EMBEDDINGS
+              value: "1"
+            - name: LLAMA_ARG_N_PARALLEL
+              value: "4"
+            - name: LLAMA_ARG_THREADS
+              value: "8"
+          args:
+            - --embeddings
+            - --host
+            - "0.0.0.0"
+            - --port
+            - "8080"
+            - --ctx-size
+            - "0"
+            - --ubatch-size
+            - "8192"
+            - --batch-size
+            - "8192"
+            - --model
+            - /models/bge-m3-F16.gguf
+            - --parallel
+            - "4"
+            - --threads
+            - "8"
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              memory: 8Gi
+            requests:
+              nvidia.com/gpu: 1
+              memory: 4Gi
+              cpu: "2"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bge-m3
+  namespace: inference
+  labels:
+    app: bge-m3
+spec:
+  selector:
+    app: bge-m3
+  ports:
+    - port: 8082
+      targetPort: 8080
+      name: http
+      protocol: TCP
+  type: ClusterIP

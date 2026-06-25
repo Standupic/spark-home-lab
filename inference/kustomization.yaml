@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - gemma.yaml
   - qwen.yaml
+  - bge-m3.yaml
