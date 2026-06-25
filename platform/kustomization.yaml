@@ -6,4 +6,7 @@ resources:
   - headlamp.yaml
   - postgres.yaml
   - forgejo.yaml
-  - postgres-secret.sops.yaml
+secretGenerator:
+  - name: postgres-secret
+    envs:
+      - postgres-secret.env

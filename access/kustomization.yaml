@@ -4,4 +4,7 @@ namespace: access
 resources:
   - deployment.yaml
   - litellm-config.yaml
-  - litellm-secret.sops.yaml
+secretGenerator:
+  - name: litellm-secret
+    envs:
+      - litellm-secret.env
