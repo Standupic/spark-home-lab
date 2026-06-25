@@ -4,3 +4,4 @@ namespace: access
 resources:
   - deployment.yaml
   - litellm-config.yaml
+  - litellm-secret.sops.yaml

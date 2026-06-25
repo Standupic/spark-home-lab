@@ -1,2 +1,2 @@
-*.key
-sops-age-key.env
+*.env
+.env

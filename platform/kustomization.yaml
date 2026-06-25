@@ -6,3 +6,4 @@ resources:
   - headlamp.yaml
   - postgres.yaml
   - forgejo.yaml
+  - postgres-secret.sops.yaml
