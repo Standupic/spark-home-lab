@@ -6,5 +6,5 @@ resources:
   - litellm-config.yaml
 secretGenerator:
   - name: litellm-secret
-    envs:
-      - litellm-secret.env
+    literals:
+      - LITELLM_MASTER_KEY=sk-admin-spark-001

@@ -8,5 +8,7 @@ resources:
   - forgejo.yaml
 secretGenerator:
   - name: postgres-secret
-    envs:
-      - postgres-secret.env
+    literals:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=litellm-platform
+      - POSTGRES_DB=litellm
