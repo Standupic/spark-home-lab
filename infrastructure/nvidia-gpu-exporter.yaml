@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"DaemonSet","metadata":{"annotations":{},"labels":{"app":"nvidia-gpu-exporter"},"name":"nvidia-gpu-exporter","namespace":"kube-system"},"spec":{"selector":{"matchLabels":{"app":"nvidia-gpu-exporter"}},"template":{"metadata":{"annotations":{"prometheus.io/path":"/metrics","prometheus.io/port":"9835","prometheus.io/scrape":"true"},"labels":{"app":"nvidia-gpu-exporter"}},"spec":{"containers":[{"args":["pip install prometheus_client 2\u003e/dev/null\ncat \u003e /exporter.py \u003c\u003c \"PYEOF\"\nimport subprocess, time\nfrom prometheus_client import start_http_server, Gauge, Counter\n\ntemp = Gauge(\"nvidia_gpu_temperature_celsius\", \"GPU temperature\", [\"gpu\", \"name\"])\nutil = Gauge(\"nvidia_gpu_utilization_percent\", \"GPU utilization\", [\"gpu\", \"name\"])\nmem_used = Gauge(\"nvidia_gpu_memory_used_bytes\", \"GPU memory used\", [\"gpu\", \"name\"])\nmem_total = Gauge(\"nvidia_gpu_memory_total_bytes\", \"GPU memory total\", [\"gpu\", \"name\"])\npower = Gauge(\"nvidia_gpu_power_watts\", \"GPU power draw\", [\"gpu\", \"name\"])\nerrors = Counter(\"nvidia_gpu_errors_total\", \"nvidia-smi errors\")\n\nstart_http_server(9835)\nwhile True:\n    try:\n        out = subprocess.check_output(\n            [\"nsenter\", \"-t\", \"1\", \"-m\", \"-u\", \"-n\", \"-i\", \"nvidia-smi\",\n             \"--query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw\",\n             \"--format=csv,noheader,nounits\"],\n            timeout=10, text=True\n        )\n        for line in out.strip().split(\"\\n\"):\n            parts = [p.strip() for p in line.split(\",\")]\n            if len(parts) \u003e= 7:\n                idx, name, t, u, mu, mt, pw = parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6]\n                temp.labels(gpu=idx, name=name).set(float(t) if t != \"[N/A]\" else 0)\n                util.labels(gpu=idx, name=name).set(float(u) if u != \"[N/A]\" else 0)\n                mem_used.labels(gpu=idx, name=name).set(float(mu) * 1024 * 1024 if mu != \"[N/A]\" else 0)\n                mem_total.labels(gpu=idx, name=name).set(float(mt) * 1024 * 1024 if mt != \"[N/A]\" else 0)\n                power.labels(gpu=idx, name=name).set(float(pw) if pw != \"[N/A]\" else 0)\n    except Exception as e:\n        errors.inc()\n    time.sleep(15)\nPYEOF\nexec python3 /exporter.py\n"],"command":["/bin/sh","-c"],"image":"python:3.12-slim","name":"exporter","ports":[{"containerPort":9835,"name":"metrics"}],"resources":{"limits":{"cpu":"100m","memory":"128Mi"},"requests":{"cpu":"50m","memory":"64Mi"}},"securityContext":{"privileged":true}}],"hostNetwork":true,"hostPID":true,"tolerations":[{"operator":"Exists"}]}}}}
+  labels:
+    app: nvidia-gpu-exporter
+  name: nvidia-gpu-exporter
+  namespace: kube-system
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: nvidia-gpu-exporter
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9835"
+        prometheus.io/scrape: "true"
+      labels:
+        app: nvidia-gpu-exporter
+    spec:
+      containers:
+      - args:
+        - |
+          pip install prometheus_client 2>/dev/null
+          cat > /exporter.py << "PYEOF"
+          import subprocess, time
+          from prometheus_client import start_http_server, Gauge, Counter
+
+          temp = Gauge("nvidia_gpu_temperature_celsius", "GPU temperature", ["gpu", "name"])
+          util = Gauge("nvidia_gpu_utilization_percent", "GPU utilization", ["gpu", "name"])
+          mem_used = Gauge("nvidia_gpu_memory_used_bytes", "GPU memory used", ["gpu", "name"])
+          mem_total = Gauge("nvidia_gpu_memory_total_bytes", "GPU memory total", ["gpu", "name"])
+          power = Gauge("nvidia_gpu_power_watts", "GPU power draw", ["gpu", "name"])
+          errors = Counter("nvidia_gpu_errors_total", "nvidia-smi errors")
+
+          start_http_server(9835)
+          while True:
+              try:
+                  out = subprocess.check_output(
+                      ["nsenter", "-t", "1", "-m", "-u", "-n", "-i", "nvidia-smi",
+                       "--query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw",
+                       "--format=csv,noheader,nounits"],
+                      timeout=10, text=True
+                  )
+                  for line in out.strip().split("\n"):
+                      parts = [p.strip() for p in line.split(",")]
+                      if len(parts) >= 7:
+                          idx, name, t, u, mu, mt, pw = parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6]
+                          temp.labels(gpu=idx, name=name).set(float(t) if t != "[N/A]" else 0)
+                          util.labels(gpu=idx, name=name).set(float(u) if u != "[N/A]" else 0)
+                          mem_used.labels(gpu=idx, name=name).set(float(mu) * 1024 * 1024 if mu != "[N/A]" else 0)
+                          mem_total.labels(gpu=idx, name=name).set(float(mt) * 1024 * 1024 if mt != "[N/A]" else 0)
+                          power.labels(gpu=idx, name=name).set(float(pw) if pw != "[N/A]" else 0)
+              except Exception as e:
+                  errors.inc()
+              time.sleep(15)
+          PYEOF
+          exec python3 /exporter.py
+        command:
+        - /bin/sh
+        - -c
+        image: python:3.12-slim
+        imagePullPolicy: IfNotPresent
+        name: exporter
+        ports:
+        - containerPort: 9835
+          name: metrics
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        securityContext:
+          privileged: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      hostPID: true
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+status:
+  currentNumberScheduled: 1
+  desiredNumberScheduled: 1
+  numberAvailable: 1
+  numberMisscheduled: 0
+  numberReady: 1
+  observedGeneration: 1
+  updatedNumberScheduled: 1
