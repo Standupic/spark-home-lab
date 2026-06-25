@@ -9,17 +9,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Install deps
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq curl ca-certificates git nodejs npm
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install kubectl
         run: |
-          apt-get update -qq && apt-get install -y -qq curl ca-certificates
           curl -sLO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
           chmod +x kubectl && mv kubectl /usr/local/bin/
           mkdir -p $HOME/.kube
           echo "YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCmNsdXN0ZXJzOgotIGNsdXN0ZXI6CiAgICBpbnNlY3VyZS1za2lwLXRscy12ZXJpZnk6IHRydWUKICAgIHNlcnZlcjogaHR0cHM6Ly8xMC40My4wLjEKICBuYW1lOiBrM3MKY29udGV4dHM6Ci0gY29udGV4dDoKICAgIGNsdXN0ZXI6IGszcwogICAgdXNlcjogZm9yZ2Vqby1ydW5uZXIKICBuYW1lOiBrM3MKY3VycmVudC1jb250ZXh0OiBrM3MKdXNlcnM6Ci0gbmFtZTogZm9yZ2Vqby1ydW5uZXIKICB1c2VyOgogICAgdG9rZW46IGV5SmhiR2NpT2lKU1V6STFOaUlzSW10cFpDSTZJbTFsVERFeVMySk1XVXhLYW5Gb04ySkhURGhvZEZJNFduQndOakJTVm1wbFpVeElhRTB4ZEdZelRrMGlmUS5leUpoZFdRaU9sc2lhSFIwY0hNNkx5OXJkV0psY201bGRHVnpMbVJsWm1GMWJIUXVjM1pqTG1Oc2RYTjBaWEl1Ykc5allXd2lMQ0pyTTNNaVhTd2laWGh3SWpveU1EazNOelEzTlRVekxDSnBZWFFpT2pFM09ESXpPRGMxTlRNc0ltbHpjeUk2SW1oMGRIQnpPaTh2YTNWaVpYSnVaWFJsY3k1a1pXWmhkV3gwTG5OMll5NWpiSFZ6ZEdWeUxteHZZMkZzSWl3aWFuUnBJam9pTlRnM1pEVm1OREF0TVdJeE5DMDBORGhrTFdKalpHWXRNVFZrWVdFME9XSmpPVEJrSWl3aWEzVmlaWEp1WlhSbGN5NXBieUk2ZXlKdVlXMWxjM0JoWTJVaU9pSndiR0YwWm05eWJTSXNJbk5sY25acFkyVmhZMk52ZFc1MElqcDdJbTVoYldVaU9pSm1iM0puWldwdkxYSjFibTVsY2lJc0luVnBaQ0k2SW1aaU1tSTJZbUZpTFdFMFkyUXRORGxsTkMxaE5tUmtMVGxsTXpCallUQmhaVE5qWVNKOWZTd2libUptSWpveE56Z3lNemczTlRVekxDSnpkV0lpT2lKemVYTjBaVzA2YzJWeWRtbGpaV0ZqWTI5MWJuUTZjR3hoZEdadmNtMDZabTl5WjJWcWJ5MXlkVzV1WlhJaWZRLlJyNjEyMzAzR01mdmk1RU9kTWl3cm9EVHROU1hsWHIyZlFWaGYxUi1wZ1FMdmRSUWgtdHVGZlZqNXZ5MHI5MVdPTnZNaG1uX290QnpQLTJic0RZRHU5aEYwVHpXWDFUYk1ZUTNFRU1INkF4R3hhakx6WTRzSjFGZEdvcnBpSkRLT3M4Z3J3MUhDY1FtTHhWRTdFdVZoWk9KUEhtRXZYZVpDRXQ1T0FTdml1eFdiakFpVl9RS2lVQTluWHlHTndSYjUtUkpqX1BlakRFbHpuLU91QXVBbm9RZU5lQTdONC0zLWpIbDBVNXE5cEVIWlpseDNjcHZqS2d4b1E1QjZpeHUyZm9BWGtUSVpuMjRINHpmekNMNldxTFhDdUpSOU9RX2o1T2RNd0dvbk1YcEVyeHgxUE93QlVhV1dEM1h2cEt5ZUNfYkZBVHZMaEhnLTNkNHFsTDItZwo=" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
 
       - name: Validate manifests
         run: |
