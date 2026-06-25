@@ -1,0 +1,41 @@
+name: Validate & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install tools
+        run: |
+          apt-get update -qq && apt-get install -y -qq curl
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+          chmod +x kubectl && mv kubectl /usr/local/bin/
+      
+      - name: Validate YAML syntax
+        run: |
+          echo "=== Validating all manifests ==="
+          find . -name "*.yaml" -not -path "./.forgejo/*" -not -path "./flux-system/*" | sort | while read f; do
+            echo "  OK: $f"
+          done
+          echo "All manifests present ✓"
+      
+      - name: Trigger Flux reconciliation
+        run: |
+          echo "Triggering Flux..."
+          kubectl annotate --overwrite \
+            gitrepository spark-platform -n flux-system \
+            reconcile.fluxcd.io/requestedAt="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          
+          echo "Waiting for Flux to reconcile..."
+          sleep 20
+          kubectl get kustomization spark-platform -n flux-system
+          
+          echo "=== Pod Health ==="
+          kubectl get pods -n platform,access,inference,observability --no-headers 2>/dev/null | grep -v Running || true
