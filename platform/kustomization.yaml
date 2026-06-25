@@ -6,9 +6,4 @@ resources:
   - headlamp.yaml
   - postgres.yaml
   - forgejo.yaml
-secretGenerator:
-  - name: postgres-secret
-    literals:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=litellm-platform
-      - POSTGRES_DB=litellm
+  - postgres-secret.sops.yaml

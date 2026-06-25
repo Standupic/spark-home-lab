@@ -4,7 +4,4 @@ namespace: access
 resources:
   - deployment.yaml
   - litellm-config.yaml
-secretGenerator:
-  - name: litellm-secret
-    literals:
-      - LITELLM_MASTER_KEY=sk-admin-spark-001
+  - litellm-secret.sops.yaml
