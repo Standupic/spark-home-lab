@@ -22,7 +22,7 @@ spec:
           ports:
             - containerPort: 3000
               protocol: TCP
-            - containerPort: 2222
+            - containerPort: 22
               protocol: TCP
           env:
             - name: FORGEJO__server__DOMAIN
@@ -31,8 +31,8 @@ spec:
               value: https://git.spark.homelab.lan
             - name: FORGEJO__server__SSH_DOMAIN
               value: git.spark.homelab.lan
-            - name: FORGEJO__server__SSH_LISTEN_PORT
-              value: "2222"
+            - name: # FORGEJO__server__SSH_LISTEN_PORT
+              # value: removed
             - name: FORGEJO__server__SSH_PORT
               value: "30022"
             - name: FORGEJO__server__OFFLINE_MODE
@@ -78,8 +78,8 @@ spec:
       targetPort: 3000
       nodePort: 30393
     - name: ssh
-      port: 2222
-      targetPort: 2222
+      port: 22
+      targetPort: 22
       nodePort: 30023
 ---
 apiVersion: v1
