@@ -18,12 +18,5 @@ data:
           api_base: http://qwen.inference.svc.cluster.local:8081/v1
           api_key: not-needed
           max_tokens: 16384
-      - model_name: bge-m3
-        litellm_params:
-          model: openai/bge-m3
-          api_base: http://bge-m3.inference.svc.cluster.local:8082/v1
-          api_key: not-needed
-        model_info:
-          mode: embedding
     general_settings:
       master_key: sk-admin-spark-001
