@@ -35,8 +35,8 @@ spec:
     spec:
       containers:
         - name: bge-m3
-          image: rbehzadan/bge-m3-f16:latest
-          imagePullPolicy: IfNotPresent
+          image: llama-cpp:sm121
+          imagePullPolicy: Never
           ports:
             - containerPort: 8080
               name: http
